@@ -8,8 +8,17 @@ import (
 	"io"
 	"io/ioutil"
 
+	baseErrors "errors"
+
 	"github.com/itchio/dskompress/internal"
 	"github.com/itchio/dskompress/internal/errors"
+)
+
+var (
+	// ReadyToSaveError is returned by Read() when a SaverReader is ready to emit a checkpoint
+	ReadyToSaveError = baseErrors.New("ready to save")
+	// NotOnBoundaryError is returned by Save() when a SaverReader wasn't ready to emit a checkpoint
+	NotOnBoundaryError = baseErrors.New("asked to save, but not on boundary")
 )
 
 type Reader struct {
@@ -56,6 +65,33 @@ type Reader struct {
 	metaRd  io.LimitedReader // Local LimitedReader to reduce allocation
 	metaWr  io.Writer        // Writer to write meta data to
 	metaBuf []byte           // Scratch space for reading meta data
+
+	onBoundary bool
+	wantSave   bool
+}
+
+type Checkpoint struct {
+	InputOffset  int64 // Total number of bytes read from underlying io.Reader
+	OutputOffset int64 // Total number of bytes emitted from Read
+
+	BitReaderBufBits uint64
+	BitReaderNumBits uint
+
+	DictSize  int
+	DictHist  []byte
+	DictWrPos int
+	DictRdPos int
+	DictFull  bool
+}
+
+type SaverReader interface {
+	io.ReadCloser
+	Saver
+}
+
+type Saver interface {
+	WantSave()
+	Save() (*Checkpoint, error)
 }
 
 type blockDecoder struct {
@@ -77,6 +113,82 @@ func NewReader(r io.Reader, conf *ReaderConfig) (*Reader, error) {
 	return br, nil
 }
 
+type saverReader struct {
+	f *Reader
+}
+
+func NewSaverReader(r io.Reader) (SaverReader, error) {
+	br, err := NewReader(r, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return &saverReader{f: br}, nil
+}
+
+func (c *Checkpoint) Resume(r io.Reader) (SaverReader, error) {
+	br, err := NewReader(r, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	br.InputOffset = c.InputOffset
+	br.OutputOffset = c.OutputOffset
+
+	br.rd.offset = c.InputOffset
+	br.rd.bufBits = c.BitReaderBufBits
+	br.rd.numBits = c.BitReaderNumBits
+
+	br.dict.size = c.DictSize
+	br.dict.hist = c.DictHist
+	br.dict.wrPos = c.DictWrPos
+	br.dict.rdPos = c.DictRdPos
+	br.dict.full = c.DictFull
+
+	br.step = (*Reader).readBlockHeader
+	br.stepState = 0
+
+	return &saverReader{f: br}, nil
+}
+
+func (sr *saverReader) Close() error {
+	return sr.f.Close()
+}
+
+func (sr *saverReader) Read(buf []byte) (int, error) {
+	return sr.f.Read(buf)
+}
+
+func (sr *saverReader) WantSave() {
+	sr.f.wantSave = true
+}
+
+func (sr *saverReader) Save() (*Checkpoint, error) {
+	if !sr.f.onBoundary {
+		return nil, NotOnBoundaryError
+	}
+
+	sr.f.wantSave = false
+
+	br := sr.f
+
+	c := &Checkpoint{
+		InputOffset:  br.InputOffset,
+		OutputOffset: br.OutputOffset,
+
+		BitReaderBufBits: br.rd.bufBits,
+		BitReaderNumBits: br.rd.numBits,
+
+		DictSize:  br.dict.size,
+		DictHist:  br.dict.hist,
+		DictWrPos: br.dict.wrPos,
+		DictRdPos: br.dict.rdPos,
+		DictFull:  br.dict.full,
+	}
+
+	return c, nil
+}
+
 func (br *Reader) Read(buf []byte) (int, error) {
 	for {
 		if len(br.toRead) > 0 {
@@ -87,6 +199,10 @@ func (br *Reader) Read(buf []byte) (int, error) {
 		}
 		if br.err != nil {
 			return 0, br.err
+		}
+
+		if br.onBoundary && br.wantSave {
+			return 0, ReadyToSaveError
 		}
 
 		// Perform next step in decompression process.
@@ -563,6 +679,9 @@ finishCommand:
 	}
 
 	// Done with this block.
+	if br.wantSave {
+		br.onBoundary = true
+	}
 	br.toRead = br.dict.ReadFlush()
 	br.step = (*Reader).readBlockHeader
 	br.stepState = stateInit // Next call to readCommands must start here
