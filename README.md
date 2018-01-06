@@ -1,5 +1,7 @@
 # dskompress
 
+[![Build Status](https://travis-ci.org/itchio/dskompress.svg?branch=master)](https://travis-ci.org/itchio/dskompress)
+
 A fork of `dsnet/compress`'s brotli decoder with added support resumable decoding.
 
 ### License
