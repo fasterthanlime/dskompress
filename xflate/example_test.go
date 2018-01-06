@@ -15,8 +15,8 @@ import (
 	"io/ioutil"
 	"log"
 
-	"github.com/dsnet/compress/internal/testutil"
-	"github.com/dsnet/compress/xflate"
+	"github.com/itchio/dskompress/internal/testutil"
+	"github.com/itchio/dskompress/xflate"
 )
 
 func init() { log.SetFlags(log.Lshortfile) }

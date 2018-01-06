@@ -8,15 +8,15 @@
 //	http://bzip.org
 //
 // Unofficial format specification:
-//	https://github.com/dsnet/compress/blob/master/doc/bzip2-format.pdf
+//	https://github.com/itchio/dskompress/blob/master/doc/bzip2-format.pdf
 package bzip2
 
 import (
 	"fmt"
 	"hash/crc32"
 
-	"github.com/dsnet/compress/internal"
-	"github.com/dsnet/compress/internal/errors"
+	"github.com/itchio/dskompress/internal"
+	"github.com/itchio/dskompress/internal/errors"
 )
 
 // There does not exist a formal specification of the BZip2 format. As such,

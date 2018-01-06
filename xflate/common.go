@@ -34,14 +34,14 @@
 // overhead was about 1% for most workloads.
 //
 // Format specification:
-//  https://github.com/dsnet/compress/blob/master/doc/xflate-format.pdf
+//  https://github.com/itchio/dskompress/blob/master/doc/xflate-format.pdf
 package xflate
 
 import (
 	"compress/flate"
 	"fmt"
 
-	"github.com/dsnet/compress/internal/errors"
+	"github.com/itchio/dskompress/internal/errors"
 )
 
 // These are the magic values found in the XFLATE footer.

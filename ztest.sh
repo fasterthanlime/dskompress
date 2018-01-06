@@ -4,7 +4,7 @@
 # Use of this source code is governed by a BSD-style
 # license that can be found in the LICENSE.md file.
 
-cd $(go list -f '{{ .Dir }}' github.com/dsnet/compress)
+cd $(go list -f '{{ .Dir }}' github.com/itchio/dskompress)
 
 BOLD="\x1b[1mRunning: "
 PASS="\x1b[32mPASS"
@@ -22,8 +22,8 @@ if [[ ! -z "$RET_TEST" ]]; then echo "$RET_TEST"; echo; fi
 echo -e "${BOLD}staticcheck${RESET}"
 RET_SCHK=$(staticcheck \
 	-ignore "
-		github.com/dsnet/compress/internal/prefix/*.go:SA4016
-		github.com/dsnet/compress/brotli/*.go:SA4016
+		github.com/itchio/dskompress/internal/prefix/*.go:SA4016
+		github.com/itchio/dskompress/brotli/*.go:SA4016
 	" ./... 2>&1)
 if [[ ! -z "$RET_SCHK" ]]; then echo "$RET_SCHK"; echo; fi
 

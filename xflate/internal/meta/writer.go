@@ -8,8 +8,8 @@ import (
 	"bytes"
 	"io"
 
-	"github.com/dsnet/compress/internal/errors"
-	"github.com/dsnet/compress/internal/prefix"
+	"github.com/itchio/dskompress/internal/errors"
+	"github.com/itchio/dskompress/internal/prefix"
 )
 
 // A Writer is an io.Writer that can write XFLATE's meta encoding.

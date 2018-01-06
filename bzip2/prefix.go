@@ -7,9 +7,9 @@ package bzip2
 import (
 	"io"
 
-	"github.com/dsnet/compress/internal"
-	"github.com/dsnet/compress/internal/errors"
-	"github.com/dsnet/compress/internal/prefix"
+	"github.com/itchio/dskompress/internal"
+	"github.com/itchio/dskompress/internal/errors"
+	"github.com/itchio/dskompress/internal/prefix"
 )
 
 const (

@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/dsnet/compress/internal/testutil"
+	"github.com/itchio/dskompress/internal/testutil"
 )
 
 func TestCRC(t *testing.T) {

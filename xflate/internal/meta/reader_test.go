@@ -12,8 +12,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/dsnet/compress/internal/errors"
-	"github.com/dsnet/compress/internal/testutil"
+	"github.com/itchio/dskompress/internal/errors"
+	"github.com/itchio/dskompress/internal/testutil"
 )
 
 // TestReader tests that the reader is able to properly decode a set of valid

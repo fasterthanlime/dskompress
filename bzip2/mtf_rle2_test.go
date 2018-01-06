@@ -8,7 +8,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/dsnet/compress/internal/errors"
+	"github.com/itchio/dskompress/internal/errors"
 )
 
 func TestMoveToFront(t *testing.T) {

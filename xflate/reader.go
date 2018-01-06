@@ -12,8 +12,8 @@ import (
 	"io/ioutil"
 	"math"
 
-	"github.com/dsnet/compress/internal/errors"
-	"github.com/dsnet/compress/xflate/internal/meta"
+	"github.com/itchio/dskompress/internal/errors"
+	"github.com/itchio/dskompress/xflate/internal/meta"
 )
 
 // chunk is a tuple of raw (uncompressed) size and compressed size for a chunk.
