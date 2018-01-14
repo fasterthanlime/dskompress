@@ -77,6 +77,8 @@ type Checkpoint struct {
 	BitReaderBufBits uint64
 	BitReaderNumBits uint
 
+	Dists []int
+
 	DictSize  int
 	DictHist  []byte
 	DictWrPos int
@@ -139,6 +141,8 @@ func (c *Checkpoint) Resume(r io.Reader) (SaverReader, error) {
 	br.rd.bufBits = c.BitReaderBufBits
 	br.rd.numBits = c.BitReaderNumBits
 
+	copy(br.dists[:], c.Dists)
+
 	br.dict.size = c.DictSize
 	br.dict.hist = c.DictHist
 	br.dict.wrPos = c.DictWrPos
@@ -175,12 +179,19 @@ func (sr *saverReader) Save() (*Checkpoint, error) {
 	hist := make([]byte, len(br.dict.hist))
 	copy(hist, br.dict.hist)
 
+	// see RFC 7932, "Encoding of distances" - these
+	// are not reset across metablocks, so we need to save them
+	dists := make([]int, len(br.dists))
+	copy(dists, br.dists[:])
+
 	c := &Checkpoint{
 		InputOffset:  br.InputOffset,
 		OutputOffset: br.OutputOffset,
 
 		BitReaderBufBits: br.rd.bufBits,
 		BitReaderNumBits: br.rd.numBits,
+
+		Dists: dists,
 
 		DictSize:  br.dict.size,
 		DictHist:  hist,
@@ -204,7 +215,7 @@ func (br *Reader) Read(buf []byte) (int, error) {
 			return 0, br.err
 		}
 
-		if br.onBoundary && br.wantSave {
+		if br.onBoundary && br.wantSave && !br.last {
 			return 0, ReadyToSaveError
 		}
 
