@@ -172,6 +172,9 @@ func (sr *saverReader) Save() (*Checkpoint, error) {
 
 	br := sr.f
 
+	hist := make([]byte, len(br.dict.hist))
+	copy(hist, br.dict.hist)
+
 	c := &Checkpoint{
 		InputOffset:  br.InputOffset,
 		OutputOffset: br.OutputOffset,
@@ -180,7 +183,7 @@ func (sr *saverReader) Save() (*Checkpoint, error) {
 		BitReaderNumBits: br.rd.numBits,
 
 		DictSize:  br.dict.size,
-		DictHist:  br.dict.hist,
+		DictHist:  hist,
 		DictWrPos: br.dict.wrPos,
 		DictRdPos: br.dict.rdPos,
 		DictFull:  br.dict.full,
@@ -263,6 +266,7 @@ func (br *Reader) readStreamHeader() {
 
 // readBlockHeader reads a meta-block header according to RFC section 9.2.
 func (br *Reader) readBlockHeader() {
+	br.onBoundary = false
 	if br.last {
 		if br.rd.ReadPads() > 0 {
 			errors.Panic(errCorrupted)
@@ -358,6 +362,7 @@ func (br *Reader) readRawData() {
 		br.step = (*Reader).readRawData // We need to continue this work
 		return
 	}
+	br.onBoundary = true
 	br.step = (*Reader).readBlockHeader
 }
 
@@ -679,10 +684,8 @@ finishCommand:
 	}
 
 	// Done with this block.
-	if br.wantSave {
-		br.onBoundary = true
-	}
 	br.toRead = br.dict.ReadFlush()
+	br.onBoundary = true
 	br.step = (*Reader).readBlockHeader
 	br.stepState = stateInit // Next call to readCommands must start here
 }
